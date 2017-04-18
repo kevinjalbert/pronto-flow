@@ -1,0 +1,18 @@
+sudo: required
+
+dist: trusty
+
+language: ruby
+
+before_script:
+- npm install -g flow-bin
+
+rvm:
+- 2.0
+- 2.1
+- 2.2
+- 2.3
+- 2.4
+
+after_success:
+- bundle exec codeclimate-test-reporter
