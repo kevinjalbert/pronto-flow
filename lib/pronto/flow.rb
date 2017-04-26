@@ -4,12 +4,21 @@ require 'shellwords'
 module Pronto
   class Flow < Runner
     CONFIG_FILE = '.pronto_flow.yml'.freeze
-    CONFIG_KEYS = %w(flow_executable).freeze
+    CONFIG_KEYS = %w(flow_executable cli_options).freeze
 
-    attr_writer :flow_executable
+    attr_writer :flow_executable, :cli_options
+
+    def initialize(patches, commit = nil)
+      super(patches, commit)
+      read_config
+    end
 
     def flow_executable
       @flow_executable || 'flow'.freeze
+    end
+
+    def cli_options
+      "#{@cli_options} --json".strip
     end
 
     def files
@@ -36,7 +45,7 @@ module Pronto
     end
 
     def read_config
-      config_file = File.join(repo_path, CONFIG_FILE)
+      config_file = File.join(git_repo_path, CONFIG_FILE)
       return unless File.exist?(config_file)
       config = YAML.load_file(config_file)
 
@@ -48,7 +57,6 @@ module Pronto
 
     def run
       if files.any?
-        read_config
         messages(run_flow)
       else
         []
@@ -56,7 +64,7 @@ module Pronto
     end
 
     def run_flow
-      Dir.chdir(repo_path) do
+      Dir.chdir(git_repo_path) do
         return JSON.parse(`#{flow_executable} --json`)
       end
     end
@@ -69,7 +77,7 @@ module Pronto
       see_file_paths = data.map do |item|
         next if item[:path].nil? || item[:path].empty?
 
-        file_path = item[:path].sub(repo_path.to_s + File::SEPARATOR, "")
+        file_path = item[:path].sub(git_repo_path.to_s , "")
 
         next if file_path == first_line_error_in_patch.patch.delta.new_file[:path]
 
@@ -102,6 +110,10 @@ module Pronto
 
         Message.new(path, first_line_error_in_patch, level, description, nil, self.class)
       end
+    end
+
+    def git_repo_path
+      @git_repo_path ||= Rugged::Repository.discover(File.expand_path(Dir.pwd)).workdir
     end
   end
 end

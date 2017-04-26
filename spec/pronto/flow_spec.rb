@@ -5,14 +5,49 @@ module Pronto
     let(:flow) { Flow.new(patches) }
     let(:patches) { [] }
 
+    describe '#cli_options' do
+      around(:example) do |example|
+        create_repository
+        Dir.chdir(repository_dir) do
+          example.run
+        end
+        delete_repository
+      end
+
+      context 'with custom cli_options' do
+        before(:each) do
+          add_to_index('.pronto_flow.yml', "cli_options: '--test option'")
+          create_commit
+        end
+
+        it 'has custom cli options applied (has --json on end)' do
+          expect(flow.cli_options).to eq('--test option --json')
+        end
+      end
+
+      context 'without custom cli_options' do
+        it 'has just --json cli options' do
+          expect(flow.cli_options).to eq('--json')
+        end
+      end
+    end
+
     describe '#run' do
-      subject(:run) { flow.run }
+      around(:example) do |example|
+        create_repository
+        Dir.chdir(repository_dir) do
+          example.run
+        end
+        delete_repository
+      end
+
+      let(:patches) { Pronto::Git::Repository.new(repository_dir).diff("master") }
 
       context 'patches are nil' do
         let(:patches) { nil }
 
         it 'returns an empty array' do
-          expect(run).to eql([])
+          expect(flow.run).to eql([])
         end
       end
 
@@ -20,14 +55,12 @@ module Pronto
         let(:patches) { [] }
 
         it 'returns an empty array' do
-          expect(run).to eql([])
+          expect(flow.run).to eql([])
         end
       end
 
       context 'with patch data' do
         before(:each) do
-          create_repository
-
           flow_config = <<-HEREDOC
           HEREDOC
 
@@ -51,10 +84,6 @@ module Pronto
           create_commit
         end
 
-        after(:each) { delete_repository }
-
-        let(:patches) { Pronto::Git::Repository.new(repo.path).diff("master") }
-
         context "with error in changed file" do
           before(:each) do
             create_branch("staging", checkout: true)
@@ -72,8 +101,8 @@ module Pronto
           end
 
           it 'returns correct error message with ref to other file contexts' do
-            expect(run.count).to eql(1)
-            expect(run.first.msg).to eql("number This type is incompatible with the expected return type of string")
+            expect(flow.run.count).to eql(1)
+            expect(flow.run.first.msg).to eql("number This type is incompatible with the expected return type of string")
           end
         end
 
@@ -94,14 +123,14 @@ module Pronto
           end
 
           it 'returns correct error message with ref to other file contexts' do
-            expect(run.count).to eql(1)
+            expect(flow.run.count).to eql(1)
 
             expected_output = <<-HEREDOC
 undefined (too few arguments, expected default/rest parameters) This type is incompatible with number
 See: content.js:3
             HEREDOC
 
-            expect(run.first.msg).to eql(expected_output.strip)
+            expect(flow.run.first.msg).to eql(expected_output.strip)
           end
         end
 
@@ -132,7 +161,7 @@ See: content.js:3
           end
 
           it 'returns correct error message with ref to other file contexts' do
-            expect(run.count).to eql(2)
+            expect(flow.run.count).to eql(2)
 
             expected_output = <<-HEREDOC
 undefined (too few arguments, expected default/rest parameters) This type is incompatible with number
@@ -144,8 +173,8 @@ undefined (too few arguments, expected default/rest parameters) This type is inc
 See: second_content.js:3
             HEREDOC
 
-            expect(run.first.msg).to eql(expected_output.strip)
-            expect(run.last.msg).to eql(second_expected_output.strip)
+            expect(flow.run.first.msg).to eql(expected_output.strip)
+            expect(flow.run.last.msg).to eql(second_expected_output.strip)
           end
         end
 
@@ -168,7 +197,7 @@ See: second_content.js:3
           end
 
           it 'calls the custom flow flow_executable' do
-            expect { run }.to raise_error(JSON::ParserError, /custom flow called/)
+            expect { flow.run }.to raise_error(JSON::ParserError, /custom flow called/)
           end
         end
       end

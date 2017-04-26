@@ -27,10 +27,12 @@ Following options are available:
 | Option               | Meaning                                | Default                                   |
 | -------------------- | -------------------------------------- | ----------------------------------------- |
 | flow_executable      | flow executable to call.               | `flow` (calls `flow` in `PATH`)           |
+| cli_options          | Options to pass to the CLI.            | `--json`                                  |
 
 Example configuration to call custom flow executable:
 
 ```yaml
 # .pronto_flow.yml
 flow_executable: '/my/custom/node/path/.bin/flow'
+cli_options: '--show-all-errors'
 ```
