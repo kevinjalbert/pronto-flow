@@ -1,3 +1,11 @@
+# This repository is ⚰️ ARCHIVED ⚰️
+
+`pronto-flow` no longer falls in my interestes and I cannot give it any time in keeping it updated. With `flow` ever changing the logic for parsing the changing json output of that tool is a moving target. I've also made the decision to use TypeScript over Flow for future JavaScript projects.
+
+Feel free to fork and take the project in a new direction. You could also contact me to unarchive it if you are willing to maintain it.
+
+-----
+
 # Pronto runner for flow (using flow from npm)
 
 [![Gem Version](https://badge.fury.io/rb/pronto-flow.svg)](http://badge.fury.io/rb/pronto-flow)
